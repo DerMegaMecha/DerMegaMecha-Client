@@ -24,7 +24,24 @@ dependencies {
 
 application {
     mainClass = 'com.dermegamecha.launcher.LauncherApplication'
-    applicationDefaultJvmArgs = ['--add-modules', 'jdk.httpserver']
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// Run on a Windows x64 build host. jpackage uses WiX Toolset to create the EXE installer.
+tasks.register('packageWindowsExe', Exec) {
+    group = 'distribution'
+    description = 'Build a Windows x64 EXE installer (requires Windows, JDK 21, and WiX Toolset).'
+    dependsOn tasks.named('installDist')
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
+    doFirst {
+        def inputDir = layout.buildDirectory.dir('install/launcher/lib').get().asFile
+        def outputDir = layout.buildDirectory.dir('installer').get().asFile
+        outputDir.mkdirs()
+        commandLine 'jpackage', '--type', 'exe', '--name', 'DerMegaMechaLauncher', '--app-version', project.version.toString(),
+                '--vendor', 'DerMegaMecha', '--description', 'Your Minecraft. Your Performance. Your Experience.',
+                '--input', inputDir.absolutePath, '--main-jar', tasks.jar.archiveFile.get().asFile.name,
+                '--main-class', 'com.dermegamecha.launcher.LauncherApplication', '--dest', outputDir.absolutePath,
+                '--win-menu', '--win-shortcut', '--win-dir-chooser', '--win-per-user-install', '--java-options', '-Dfile.encoding=UTF-8'
+    }
+}
