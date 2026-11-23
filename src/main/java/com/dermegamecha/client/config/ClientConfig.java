@@ -1,5 +1,6 @@
-package com.dermegamecha.client;
+package com.dermegamecha.client.config;
 
+import com.dermegamecha.client.DerMegaMechaClient;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.Minecraft;
@@ -25,12 +26,14 @@ public final class ClientConfig {
     private transient double smoothedFrameMs = 16.67;
 
     public void load() {
-        Path file = getFile();
         try {
+            Path file = getFile();
             if (Files.exists(file)) {
                 ClientConfig loaded = GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), ClientConfig.class);
                 if (loaded != null) copyFrom(loaded);
-            } else save();
+            } else {
+                save();
+            }
         } catch (Exception exception) {
             DerMegaMechaClient.LOGGER.error("Failed to load DerMegaMecha configuration", exception);
         }
@@ -38,8 +41,9 @@ public final class ClientConfig {
 
     public synchronized void save() {
         try {
-            Files.createDirectories(getFile().getParent());
-            Files.writeString(getFile(), GSON.toJson(this), StandardCharsets.UTF_8);
+            Path file = getFile();
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, GSON.toJson(this), StandardCharsets.UTF_8);
         } catch (Exception exception) {
             DerMegaMechaClient.LOGGER.error("Failed to save DerMegaMecha configuration", exception);
         }
