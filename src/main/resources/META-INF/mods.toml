@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[52,)"
+license="MIT"
+
+[[mods]]
+modId="dermegamecha"
+version="1.0.0"
+displayName="DerMegaMecha Client"
+description='''
+Built for Performance. Designed for PvP. Fair by Nature.
+A fair-play Forge client with a configurable PvP HUD, visual enhancements and performance information.
+'''
+authors="DerMegaMecha"
+
+[[dependencies.dermegamecha]]
+modId="forge"
+mandatory=true
+versionRange="[52,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.dermegamecha]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"
