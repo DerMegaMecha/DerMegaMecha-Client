@@ -20,6 +20,7 @@ public final class ClientConfig {
     public Crosshair crosshair = new Crosshair();
     public InterfaceSettings interfaceSettings = new InterfaceSettings();
     public Accessibility accessibility = new Accessibility();
+    public HudLayout hudLayout = new HudLayout();
 
     private transient long sessionStart = System.currentTimeMillis();
     private transient long lastFrameTime = System.nanoTime();
@@ -63,6 +64,7 @@ public final class ClientConfig {
         this.crosshair = source.crosshair != null ? source.crosshair : new Crosshair();
         this.interfaceSettings = source.interfaceSettings != null ? source.interfaceSettings : new InterfaceSettings();
         this.accessibility = source.accessibility != null ? source.accessibility : new Accessibility();
+        this.hudLayout = source.hudLayout != null ? source.hudLayout : new HudLayout();
     }
 
     public void updateFrameAndSession() {
@@ -86,4 +88,10 @@ public final class ClientConfig {
     public static class Crosshair { public boolean enabled = true; public int shape = 0; public int size = 8; public int thickness = 1; public int gap = 3; public boolean dynamic = false; public int color = 0xFFFFFF; }
     public static class InterfaceSettings { public int opacity = 220; public int backgroundColor = 0x171C24; public int accentColor = 0x4CC9F0; public boolean roundedPanels = true; }
     public static class Accessibility { public boolean highContrast = false; public float textScale = 1.0f; }
+    public static class HudLayout {
+        public int x = 8;
+        public int y = 8;
+        public int crosshairX = -1;
+        public int crosshairY = -1;
+    }
 }

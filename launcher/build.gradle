@@ -12,6 +12,35 @@ java {
 
 repositories { mavenCentral() }
 
+def dermegamechaModpackUrl = providers.gradleProperty('dermegamechaModpackUrl')
+        .orElse(providers.environmentVariable('DERMEGAMECHA_MODPACK_URL'))
+        .map { it.trim() }
+        .orElse('')
+def generatedLauncherConfigDir = layout.buildDirectory.dir('generated/resources/launcherConfig')
+
+tasks.register('generateLauncherConfig') {
+    inputs.property('dermegamechaModpackUrl', dermegamechaModpackUrl)
+    outputs.file(generatedLauncherConfigDir.map { it.file('dermegamecha-launcher.properties') })
+    doLast {
+        def output = generatedLauncherConfigDir.get().file('dermegamecha-launcher.properties').asFile
+        output.parentFile.mkdirs()
+        def packUrl = dermegamechaModpackUrl.getOrElse('')
+                .replace('\\', '\\\\')
+                .replace('\r', '\\r')
+                .replace('\n', '\\n')
+        output.setText("modpackUrl=${packUrl}\n", 'UTF-8')
+    }
+}
+
+sourceSets.main.resources.srcDir(generatedLauncherConfigDir)
+tasks.named('processResources') {
+    dependsOn tasks.named('generateLauncherConfig')
+    exclude 'microsoft-auth.properties'
+    doFirst {
+        project.delete(project.layout.buildDirectory.file('resources/main/microsoft-auth.properties').get().asFile)
+    }
+}
+
 javafx {
     version = '21.0.6'
     modules = [ 'javafx.controls' ]
@@ -19,7 +48,11 @@ javafx {
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.12.1'
-    implementation 'net.java.dev.jna:jna-platform:5.16.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 application {
@@ -28,14 +61,41 @@ application {
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
-// Run on a Windows x64 build host. jpackage uses WiX Toolset to create the EXE installer.
-tasks.register('packageWindowsExe', Exec) {
+tasks.register('packageWindowsAppImage', Exec) {
     group = 'distribution'
-    description = 'Build a Windows x64 EXE installer (requires Windows, JDK 21, and WiX Toolset).'
+    description = 'Build a native Windows launcher app image with a bundled Java runtime.'
     dependsOn tasks.named('installDist')
     onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
     doFirst {
-        def inputDir = layout.buildDirectory.dir('install/launcher/lib').get().asFile
+        def inputDir = layout.buildDirectory.dir('install/DerMegaMecha-Launcher/lib').get().asFile
+        def outputDir = layout.buildDirectory.dir('jpackage').get().asFile
+        def appImage = new File(outputDir, 'DerMegaMechaLauncher')
+        outputDir.mkdirs()
+        if (appImage.exists() && !appImage.deleteDir()) {
+            throw new GradleException("Could not remove previous app image: ${appImage}")
+        }
+        commandLine 'jpackage', '--type', 'app-image', '--name', 'DerMegaMechaLauncher',
+                '--app-version', project.version.toString(), '--vendor', 'DerMegaMecha',
+                '--description', 'DerMegaMecha Launcher',
+                '--input', inputDir.absolutePath,
+                '--main-jar', tasks.jar.archiveFile.get().asFile.name,
+                '--main-class', 'com.dermegamecha.launcher.LauncherApplication',
+                '--dest', outputDir.absolutePath,
+                '--icon', project.file('../installer/DerMegaMecha.ico').absolutePath,
+                '--java-options', '-Dfile.encoding=UTF-8',
+                '--java-options', '--module-path=$APPDIR',
+                '--java-options', '--add-modules=javafx.controls'
+    }
+}
+
+// jpackage's EXE installer format requires WiX. The Inno Setup installer is the release installer.
+tasks.register('packageWindowsExe', Exec) {
+    group = 'distribution'
+    description = 'Build a Windows x64 EXE installer (requires Windows, JDK 21, and WiX Toolset).'
+    dependsOn tasks.named('packageWindowsAppImage')
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
+    doFirst {
+        def inputDir = layout.buildDirectory.dir('jpackage/DerMegaMechaLauncher/app').get().asFile
         def outputDir = layout.buildDirectory.dir('installer').get().asFile
         outputDir.mkdirs()
         commandLine 'jpackage', '--type', 'exe', '--name', 'DerMegaMechaLauncher', '--app-version', project.version.toString(),

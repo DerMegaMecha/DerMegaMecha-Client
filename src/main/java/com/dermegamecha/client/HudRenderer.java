@@ -16,8 +16,8 @@ public final class HudRenderer {
         if (mc.player == null || mc.options.hideGui) return;
 
         ClientConfig config = com.dermegamecha.client.DerMegaMechaClient.INSTANCE.config();
-        int x = 8;
-        int y = 8;
+        int x = config.hudLayout.x;
+        int y = config.hudLayout.y;
         int accent = config.interfaceSettings.accentColor;
         int background = (config.interfaceSettings.opacity << 24) | (config.interfaceSettings.backgroundColor & 0xFFFFFF);
 

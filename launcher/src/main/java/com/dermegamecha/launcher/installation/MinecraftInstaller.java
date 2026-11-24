@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public final class MinecraftInstaller {
     public static final String MINECRAFT_VERSION = "1.21.1";
@@ -55,6 +57,17 @@ public final class MinecraftInstaller {
                 downloads.download(artifact.get("url").getAsString(), target,
                         artifact.has("sha1") ? artifact.get("sha1").getAsString() : null, listener);
             }
+            if (downloadsLib.has("classifiers")) {
+                JsonObject classifiers = downloadsLib.getAsJsonObject("classifiers");
+                for (String classifierName : List.of("natives-windows", "natives-windows-64", "natives-windows-arm64")) {
+                    if (!classifiers.has(classifierName)) continue;
+                    JsonObject classifier = classifiers.getAsJsonObject(classifierName);
+                    Path target = libraryPath(paths.libraries, library, classifier);
+                    downloads.download(classifier.get("url").getAsString(), target,
+                            classifier.has("sha1") ? classifier.get("sha1").getAsString() : null, listener);
+                    extractNative(target, paths.defaultInstance().resolve("natives"));
+                }
+            }
         }
 
         JsonObject assetIndex = version.getAsJsonObject("assetIndex");
@@ -87,6 +100,20 @@ public final class MinecraftInstaller {
             allow = "allow".equals(rule.get("action").getAsString()) || allow;
         }
         return allow;
+    }
+
+    private void extractNative(Path archive, Path natives) throws IOException {
+        Files.createDirectories(natives);
+        try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(archive))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.isDirectory() || entry.getName().contains("META-INF/")) continue;
+                Path target = natives.resolve(entry.getName()).normalize();
+                if (!target.startsWith(natives)) throw new IOException("Native archive path traversal");
+                Files.createDirectories(target.getParent());
+                Files.copy(zip, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
     }
 
     private Path libraryPath(Path root, JsonObject library, JsonObject artifact) {

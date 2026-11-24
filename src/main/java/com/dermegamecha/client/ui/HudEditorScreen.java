@@ -9,6 +9,9 @@ import net.minecraft.network.chat.Component;
 
 public class HudEditorScreen extends Screen {
     private final Screen parent;
+    private boolean dragging;
+    private int dragOffsetX;
+    private int dragOffsetY;
 
     public HudEditorScreen(Screen parent) {
         super(Component.literal("HUD Editor"));
@@ -36,6 +39,39 @@ public class HudEditorScreen extends Screen {
         graphics.drawString(font, "Preview — drag support is available once an element position is saved", 12, 48, 0xFFB6C7D2);
         HudRenderer.render(graphics, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        var layout = DerMegaMechaClient.INSTANCE.config().hudLayout;
+        if (button == 0 && mouseX >= layout.x && mouseX <= layout.x + 145
+                && mouseY >= layout.y && mouseY <= layout.y + 110) {
+            dragging = true;
+            dragOffsetX = (int) mouseX - layout.x;
+            dragOffsetY = (int) mouseY - layout.y;
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            dragging = false;
+            DerMegaMechaClient.INSTANCE.config().save();
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (dragging && button == 0) {
+            var layout = DerMegaMechaClient.INSTANCE.config().hudLayout;
+            layout.x = Math.max(0, Math.min(width - 145, (int) mouseX - dragOffsetX));
+            layout.y = Math.max(36, Math.min(height - 110, (int) mouseY - dragOffsetY));
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     @Override

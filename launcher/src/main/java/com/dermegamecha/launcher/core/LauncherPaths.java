@@ -26,5 +26,6 @@ public final class LauncherPaths {
         libraries = root.resolve("libraries");
     }
 
-    public Path defaultInstance() { return instances.resolve("dermegmecha-1.21.1"); }
+    public Path defaultInstance() { return instances.resolve("dermegmecha-forge-1.21.1"); }
+    public Path fabricInstance() { return instances.resolve("dermegmecha-fabric-1.21.1"); }
 }

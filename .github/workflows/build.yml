@@ -1,0 +1,130 @@
+name: Build Forge and Launcher
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forge:
+    name: Forge Minecraft mod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build Forge mod
+        run: ./gradlew build
+      - name: Verify TLS certificate
+        run: curl --fail --head --silent --show-error https://libraries.minecraft.net/
+
+  launcher:
+    name: JavaFX Windows launcher
+    runs-on: windows-latest
+    env:
+      DERMEGAMECHA_MODPACK_URL: ${{ vars.DERMEGAMECHA_MODPACK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Require official modpack URL for tagged builds
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $packUrl = ([string]$env:DERMEGAMECHA_MODPACK_URL).Trim()
+          $uri = $null
+          if (-not [uri]::TryCreate($packUrl, [System.UriKind]::Absolute, [ref]$uri) -or
+              $uri.Scheme -ne 'https' -or
+              $uri.Host -notin @('cdn.modrinth.com', 'modrinth.com', 'api.modrinth.com', 'github.com', 'raw.githubusercontent.com', 'release-assets.githubusercontent.com', 'gitlab.com')) {
+            throw 'Set the publisher-only repository Actions variable DERMEGAMECHA_MODPACK_URL to the official HTTPS .mrpack URL before creating a release tag.'
+          }
+      - name: Clean, test, build and package Windows app image
+        shell: pwsh
+        run: |
+              .\launcher\gradlew.bat clean build packageWindowsAppImage
+      - name: Verify packaged launcher excludes legacy authentication
+        shell: pwsh
+        run: |
+              $appImage = Join-Path $env:GITHUB_WORKSPACE 'launcher\build\jpackage\DerMegaMechaLauncher'
+              $appExe = Join-Path $appImage 'DerMegaMechaLauncher.exe'
+              $appDir = Join-Path $appImage 'app'
+              if (-not (Test-Path $appExe -PathType Leaf)) {
+                throw "Expected packaged launcher executable was not created: $appExe"
+              }
+
+              $jars = @(Get-ChildItem $appDir -Filter 'DerMegaMecha-Launcher-*.jar' -File)
+              if ($jars.Count -ne 1) {
+                throw "Expected exactly one application JAR in $appDir; found $($jars.Count)."
+              }
+
+              Add-Type -AssemblyName System.IO.Compression.FileSystem
+              $archive = [System.IO.Compression.ZipFile]::OpenRead($jars[0].FullName)
+              try {
+                $entries = @($archive.Entries | ForEach-Object FullName)
+                $legacyClassPattern = '^com/dermegamecha/launcher/auth/.*\.class$|^com/dermegamecha/launcher/launch/MinecraftLauncher(\$[^/]*)?\.class$'
+                $legacyClasses = @($entries | Where-Object { $_ -match $legacyClassPattern })
+                if (($legacyClasses.Count -gt 0) -or ($entries -contains 'microsoft-auth.properties')) {
+                  throw "Legacy direct-authentication resources remain in the packaged JAR: $($legacyClasses -join ', ')"
+                }
+
+                $mainClass = $archive.GetEntry('com/dermegamecha/launcher/LauncherApplication.class')
+                if ($null -eq $mainClass) {
+                  throw 'LauncherApplication.class is missing from the packaged JAR.'
+                }
+                $entryStream = $mainClass.Open()
+                $memory = [System.IO.MemoryStream]::new()
+                try {
+                  $entryStream.CopyTo($memory)
+                  $classText = [System.Text.Encoding]::ASCII.GetString($memory.ToArray())
+                }
+                finally {
+                  $entryStream.Dispose()
+                  $memory.Dispose()
+                }
+                if ($classText -match '(?i)Mit Microsoft anmelden|not available in this build|Microsoft authentication is unavailable') {
+                  throw 'The packaged launcher still contains the obsolete Microsoft sign-in UI.'
+                }
+              }
+              finally {
+                $archive.Dispose()
+              }
+      - name: Upload Windows application image
+        uses: actions/upload-artifact@v4
+        with:
+              name: DerMegaMecha-Launcher-Windows-App-Image
+              path: launcher/build/jpackage/DerMegaMechaLauncher/
+              if-no-files-found: error
+              retention-days: 14
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+      - name: Compile per-user installer
+        shell: pwsh
+        run: |
+          $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $compiler -PathType Leaf)) {
+            throw "Inno Setup compiler was not found: $compiler"
+          }
+          & $compiler .\installer\DerMegaMechaLauncher.iss
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed with exit code $LASTEXITCODE."
+          }
+          $installer = '.\launcher\build\installer\DerMegaMecha-Launcher-Setup.exe'
+          if (-not (Test-Path $installer -PathType Leaf)) {
+            throw "Expected installer was not created: $installer"
+          }
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: DerMegaMecha-Launcher-Windows-Installer
+          path: launcher/build/installer/DerMegaMecha-Launcher-Setup.exe
+          if-no-files-found: error
+          retention-days: 14
