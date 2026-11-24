@@ -19,6 +19,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: gradle
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
       - name: Build Forge mod
         run: ./gradlew build
       - name: Verify TLS certificate
