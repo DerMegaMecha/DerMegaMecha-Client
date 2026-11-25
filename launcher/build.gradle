@@ -35,10 +35,6 @@ tasks.register('generateLauncherConfig') {
 sourceSets.main.resources.srcDir(generatedLauncherConfigDir)
 tasks.named('processResources') {
     dependsOn tasks.named('generateLauncherConfig')
-    exclude 'microsoft-auth.properties'
-    doFirst {
-        project.delete(project.layout.buildDirectory.file('resources/main/microsoft-auth.properties').get().asFile)
-    }
 }
 
 javafx {
@@ -48,7 +44,6 @@ javafx {
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.12.1'
-    implementation 'net.java.dev.jna:jna-platform:5.15.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
 }
 
