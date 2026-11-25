@@ -3,6 +3,7 @@ package com.dermegamecha.launcher;
 import com.dermegamecha.launcher.core.LauncherPaths;
 import com.dermegamecha.launcher.integration.modpack.ModrinthPackService;
 import com.dermegamecha.launcher.integration.prism.PrismLauncherIntegration;
+import com.dermegamecha.launcher.ui.BlockWorldArtwork;
 import com.dermegamecha.launcher.ui.UiPreferences;
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
@@ -1214,8 +1215,8 @@ public final class LauncherApplication extends Application {
             working = false;
             spinner.setVisible(false);
             spinner.setManaged(false);
-            String operation = message.toLowerCase(java.util.Locale.ROOT);
-            if (operation.contains("prism-version") || operation.contains("prism version")) {
+            String operationDescription = message.toLowerCase(java.util.Locale.ROOT);
+            if (operationDescription.contains("prism-version") || operationDescription.contains("prism version")) {
                 prismStatusMessage = UiPreferences.text(
                         "Prism wurde gefunden, aber die Versionsprüfung ist fehlgeschlagen.",
                         "Prism was detected, but its version check failed.");
