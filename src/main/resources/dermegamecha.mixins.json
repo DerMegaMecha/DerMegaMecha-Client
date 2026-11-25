@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.dermegamecha.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "dermegamecha-refmap.json",
+  "client": [
+    "MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

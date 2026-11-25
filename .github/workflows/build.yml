@@ -1,4 +1,4 @@
-name: Build Forge and Launcher
+name: Build Fabric Mod and Launcher
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  forge:
-    name: Forge Minecraft mod
+  fabric:
+    name: Fabric Minecraft mod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +21,8 @@ jobs:
           cache: gradle
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: Build Forge mod
-        run: ./gradlew build
-      - name: Verify TLS certificate
-        run: curl --fail --head --silent --show-error https://libraries.minecraft.net/
+      - name: Build and test Fabric mod
+        run: ./gradlew clean build test
 
   launcher:
     name: JavaFX Windows launcher

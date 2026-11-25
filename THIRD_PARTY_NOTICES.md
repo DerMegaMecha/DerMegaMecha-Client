@@ -1,8 +1,8 @@
 # Third-party notices
 
 - Minecraft and Minecraft: Java Edition: Mojang Studios.
-- Minecraft Forge: Forge project and its licensors.
 - Fabric Loader and Fabric API: Fabric project and contributors.
+- SpongePowered Mixin (Fabric distribution): MIT-licensed Mixin project and contributors.
 - JavaFX/OpenJFX: OpenJFX project.
 - Gson: Google.
 - Prism Launcher is a separate, user-installed application and is not bundled or redistributed by DerMegaMecha. Prism Launcher is licensed under GPL-3.0-only; see https://github.com/PrismLauncher/PrismLauncher/blob/develop/LICENSE.

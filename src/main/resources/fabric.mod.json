@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "dermegamecha",
+  "version": "${version}",
+  "name": "DerMegaMecha Client",
+  "description": "Built for Performance. Designed for PvP. Fair by Nature. A fair-play client with a configurable PvP HUD, visual enhancements and performance information.",
+  "authors": [
+    "DerMegaMecha"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.dermegamecha.client.DerMegaMechaClient"
+    ]
+  },
+  "mixins": [
+    "dermegamecha.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
