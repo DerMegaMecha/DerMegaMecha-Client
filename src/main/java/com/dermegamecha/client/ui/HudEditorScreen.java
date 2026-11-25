@@ -37,7 +37,7 @@ public class HudEditorScreen extends Screen {
         graphics.fill(0, 0, width, 36, 0xFF10141B);
         graphics.drawString(font, "DerMegaMecha  HUD Editor", 12, 12, 0xFF4CC9F0);
         graphics.drawString(font, "Preview — drag support is available once an element position is saved", 12, 48, 0xFFB6C7D2);
-        HudRenderer.render(graphics, partialTick);
+        HudRenderer.render(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

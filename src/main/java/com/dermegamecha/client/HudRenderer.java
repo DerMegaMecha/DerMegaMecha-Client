@@ -11,7 +11,7 @@ public final class HudRenderer {
     private static long leftClicks;
     private static long rightClicks;
 
-    public static void render(GuiGraphics graphics, float partialTick) {
+    public static void render(GuiGraphics graphics) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui) return;
 

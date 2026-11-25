@@ -5,12 +5,10 @@ import com.dermegamecha.client.ui.ClientSettingsScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
+import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.gui.overlay.ForgeLayeredDraw;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -36,7 +34,6 @@ public final class DerMegaMechaClient {
         config.load();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEvents::onKeyRegistration);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onAddGuiOverlayLayers);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -64,15 +61,9 @@ public final class DerMegaMechaClient {
         if (event.getButton() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) HudRenderer.registerRightClick();
     }
 
-    private void onAddGuiOverlayLayers(AddGuiOverlayLayersEvent event) {
-        event.getLayeredDraw().add(
-                ForgeLayeredDraw.VANILLA_ROOT,
-                ResourceLocation.fromNamespaceAndPath(MOD_ID, "hud"),
-                (guiGraphics, deltaTracker) -> {
-                    if (config.general.enableHud) {
-                        HudRenderer.render(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false));
-                    }
-                });
+    @SubscribeEvent
+    public void onChatOverlay(CustomizeGuiOverlayEvent.Chat event) {
+        if (config.general.enableHud) HudRenderer.render(event.getGuiGraphics());
     }
 
     public static final class ClientEvents {
